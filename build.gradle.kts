@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     kotlin("jvm") version "2.2.0"
 }
@@ -19,10 +17,5 @@ dependencies {
 }
 
 kotlin {
-    jvmToolchain(21)
-}
-val compileKotlin: KotlinCompile by tasks
-
-compileKotlin.compilerOptions {
-    freeCompilerArgs.set(listOf("-Xnested-type-aliases"))
+    jvmToolchain(17)
 }

@@ -13,12 +13,13 @@ import rise.packet.api.S2CPacket
 import java.net.URI
 import java.nio.ByteBuffer
 
+typealias PacketListener = (packet: S2CPacket) -> Unit
+
 // 98% of this WAS from Waffler527, before I rewrote it in a different library in order to stop the complaints.
 // I got blocked and ignored because I forgot this 1 line above before I rewrote it...
 @ClientEndpoint(configurator = ClientConfigurator::class)
 class WebSocketClient {
     companion object {
-        typealias PacketListener = (packet: S2CPacket) -> Unit
         private val gson: Gson = GsonBuilder().create()
 //        private const val RECONNECT_DELAY = 3000L
         private const val SERVER = "wss://auth.riseclient.com:8443"
