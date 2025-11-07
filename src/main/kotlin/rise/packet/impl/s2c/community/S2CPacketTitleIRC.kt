@@ -1,7 +1,6 @@
 package rise.packet.impl.s2c.community
 
 import com.google.gson.JsonObject
-import rise.packet.api.NetHandler
 import rise.packet.api.S2CPacket
 
 class S2CPacketTitleIRC(
@@ -16,9 +15,6 @@ class S2CPacketTitleIRC(
         json.get("d").asInt,
         json.get("e").asString
     )
-
-    override fun handle(conn: NetHandler) {
-    }
 
     override fun toString(): String {
         return "S2CPacketTitleIRC(message='$message', fadeInTime=$fadeInTime, displayTime=$displayTime, fadeOutTime=$fadeOutTime, color='$color')"

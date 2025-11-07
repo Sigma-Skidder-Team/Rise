@@ -1,7 +1,6 @@
 package rise.packet.impl.s2c.protection
 
 import com.google.gson.JsonObject
-import rise.packet.api.NetHandler
 import rise.packet.api.S2CPacket
 import rise.packet.impl.c2s.protection.C2SPacketFilterEntities.Companion.Entity
 
@@ -17,9 +16,6 @@ class S2CPacketEntities(val entities: MutableList<Entity>, val uid: Int) : S2CPa
         },
         json.get("b").asInt
     )
-
-    override fun handle(conn: NetHandler) {
-    }
 
     override fun toString(): String {
         return "S2CPacketEntities(entities=$entities, uid=$uid)"

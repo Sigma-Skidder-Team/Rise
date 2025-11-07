@@ -2,7 +2,6 @@ package rise.packet.impl.s2c.community
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import rise.packet.api.NetHandler
 import rise.packet.api.S2CPacket
 
 class S2CPacketCommunityInfo(
@@ -15,9 +14,6 @@ class S2CPacketCommunityInfo(
         json.get("a")?.asJsonArray,
         json.get("b")?.asJsonArray
     )
-
-    override fun handle(conn: NetHandler) {
-    }
 
     override fun toString(): String {
         return "S2CPacketCommunityInfo(type='$type', configs=$configs, scripts=$scripts)"

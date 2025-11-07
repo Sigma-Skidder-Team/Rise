@@ -1,7 +1,6 @@
 package rise.packet.impl.s2c.protection
 
 import com.google.gson.JsonObject
-import rise.packet.api.NetHandler
 import rise.packet.api.S2CPacket
 
 class S2CPacketAuthenticationFinish(
@@ -18,9 +17,6 @@ class S2CPacketAuthenticationFinish(
         json.get("c").asFloat,
         json.get("d").asLong,
     )
-
-    override fun handle(conn: NetHandler) {
-    }
 
     override fun toString(): String {
         return "S2CPacketAuthenticationFinish(success=$success, reason='$reason', pi=$pi, maxPitch=$maxPitch, serverTimeMS=$serverTimeMS)"
