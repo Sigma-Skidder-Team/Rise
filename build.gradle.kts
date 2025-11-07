@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "2.2.0"
+    id("org.jetbrains.dokka") version "2.1.0"
     `maven-publish`
 }
 
@@ -19,9 +20,14 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 }
 
-java {
-    withSourcesJar()
-    withJavadocJar()
+tasks.register<Jar>("sourcesJar") {
+    from(sourceSets["main"].allSource)
+    archiveClassifier.set("sources")
+}
+
+tasks.register<Jar>("dokkaJar") {
+    from(tasks.dokkaHtml)
+    archiveClassifier.set("javadoc")
 }
 
 
