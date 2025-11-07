@@ -11,6 +11,7 @@ import rise.packet.impl.s2c.protection.S2CPacketAuthenticationFinish
 import rise.packet.impl.s2c.protection.S2CPacketJoinServer
 import rise.packet.impl.s2c.protection.S2CPacketLoadConfig
 import rise.WebSocketClient
+import rise.packet.impl.c2s.community.asIRCMessage
 
 
 @JvmRecord
@@ -37,6 +38,7 @@ fun connectAs(acc: Account) {
                 println("Auth time: ${packet.serverTimeMS}")
                 println("PI: ${packet.pi}")
                 println("Max Pitch: ${packet.maxPitch}")
+                wsc.send("Hello from github.com/Sigma-Skidder-Team/Rise!".asIRCMessage)
             }
             is S2CPacketKeepAlive -> {}
             is S2CPacketTabIRC -> {
@@ -72,7 +74,7 @@ fun connectAs(acc: Account) {
 }
 
 fun main() {
-    val accounts = setOf(Account("billionaire", "goober"))
+    val accounts = setOf(Account("YourNameHere", "YourHWIDHere"))
     for (acc in accounts) {
         connectAs(acc)
     }
