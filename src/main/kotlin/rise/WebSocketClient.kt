@@ -4,14 +4,19 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import jakarta.websocket.ClientEndpoint
+import jakarta.websocket.OnClose
 import jakarta.websocket.OnMessage
 import jakarta.websocket.OnOpen
 import jakarta.websocket.Session
 import org.glassfish.tyrus.client.ClientManager
 import rise.packet.api.C2SPacket
 import rise.packet.api.S2CPacket
+import rise.packet.impl.c2s.general.C2SPacketKeepAlive
 import java.net.URI
 import java.nio.ByteBuffer
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 typealias PacketListener = (packet: S2CPacket) -> Unit
 
@@ -25,6 +30,8 @@ class WebSocketClient {
         private const val SERVER = "wss://auth.riseclient.com:8443"
         private val SERVER_URL = URI.create(SERVER)
     }
+
+    private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private val packetListeners = mutableSetOf<PacketListener>()
     private val handshakeListeners = mutableSetOf<() -> Unit>()
     private var session: Session? = null
@@ -48,7 +55,19 @@ class WebSocketClient {
     fun onOpen(session: Session) {
         this.session = session
         println("Connection opened!")
+        scheduler.scheduleAtFixedRate({
+            try {
+                send(C2SPacketKeepAlive)
+            } catch (e: Exception) {
+            }
+        }, 1, 1, TimeUnit.SECONDS)
         handshakeListeners.callEach()
+    }
+
+    @OnClose
+    @Suppress("unused")
+    fun onClose() {
+        scheduler.shutdownNow()
     }
 
     @OnMessage
