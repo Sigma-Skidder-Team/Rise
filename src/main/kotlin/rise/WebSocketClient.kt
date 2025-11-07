@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit
 
 typealias PacketListener = (packet: S2CPacket) -> Unit
 
+// 98% of this is from Waffler527 lol
 class WebSocketClient {
     companion object {
         private val gson: Gson = GsonBuilder().create()
@@ -38,6 +39,7 @@ class WebSocketClient {
     fun addPacketListener(listener: PacketListener) {
         packetListeners.add(listener)
     }
+
     fun addHandshakeListener(listener: () -> Unit) {
         handshakeListeners.add(listener)
     }
@@ -70,10 +72,9 @@ class WebSocketClient {
                 }
             })
 
-        println("[RiseIRC] Connecting...")
         bootstrap.connect(uri.host, uri.port).addListener { f ->
             if (!f.isSuccess) {
-                println("[RiseIRC] Connection failed: ${f.cause()?.message}")
+                error("Connection failed: ${f.cause()?.message}")
             } else {
                 channel = (f as ChannelFuture).channel()
             }
@@ -105,18 +106,17 @@ class WebSocketClient {
                 try {
                     handshaker.finishHandshake(ch, msg as FullHttpResponse)
                     handshakeFuture!!.setSuccess()
-                    println("[RiseIRC] Handshake complete")
                     scheduleKeepAlive(ctx)
                     this@WebSocketClient.handshakeListeners.forEach(Function0<Unit>::invoke)
                 } catch (e: Exception) {
-                    println("[RiseIRC] Handshake failed: ${e.message}")
+                    println("Handshake failed: ${e.message}")
                     handshakeFuture!!.setFailure(e)
                     ctx.close()
                 }
                 return
             }
 
-            if (msg is FullHttpResponse) throw IllegalStateException("Unexpected HTTP response: $msg")
+            if (msg is FullHttpResponse) error("Unexpected HTTP response: $msg")
 
             when (msg) {
                 is TextWebSocketFrame -> {
@@ -125,7 +125,6 @@ class WebSocketClient {
                     this@WebSocketClient.packetListeners.forEach { it(packet) }
                 }
                 is CloseWebSocketFrame -> {
-                    println("[RiseIRC] Server closed connection")
                     ch.close()
                 }
             }
@@ -140,7 +139,7 @@ class WebSocketClient {
         }
 
         override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-            println("[RiseIRC] Error: ${cause.message}")
+            println("Error: ${cause.message}")
             ctx.close()
         }
     }
