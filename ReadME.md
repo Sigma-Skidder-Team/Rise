@@ -1,9 +1,7 @@
 # Rise
 
 lets you connect to Rise auth servers,
-with
-<small>or without if billionaire keeps auth disabled</small>
-proper credentials.
+with proper credentials.
 
 ## Waffled
 
