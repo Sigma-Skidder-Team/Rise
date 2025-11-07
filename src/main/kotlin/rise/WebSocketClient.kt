@@ -3,52 +3,41 @@ package rise
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
-import io.netty.bootstrap.Bootstrap
-import io.netty.channel.*
-import io.netty.channel.nio.NioIoHandler
-import io.netty.channel.socket.nio.NioSocketChannel
-import io.netty.handler.codec.http.DefaultHttpHeaders
-import io.netty.handler.codec.http.FullHttpResponse
-import io.netty.handler.codec.http.HttpClientCodec
-import io.netty.handler.codec.http.HttpObjectAggregator
-import io.netty.handler.codec.http.websocketx.*
-import io.netty.handler.ssl.SslContextBuilder
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory
+import jakarta.websocket.ClientEndpoint
+import jakarta.websocket.OnMessage
+import jakarta.websocket.OnOpen
+import jakarta.websocket.Session
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.glassfish.tyrus.client.ClientManager
 import rise.packet.api.C2SPacket
 import rise.packet.api.S2CPacket
 import rise.packet.impl.c2s.community.asIRCMessage
-import rise.packet.impl.c2s.general.C2SPacketKeepAlive
 import rise.packet.impl.c2s.protection.C2SPacketAuthenticate
 import rise.packet.impl.s2c.community.S2CPacketIRCMessage
 import rise.packet.impl.s2c.general.S2CPacketKeepAlive
 import rise.packet.impl.s2c.protection.S2CPacketAuthenticationFinish
 import java.net.URI
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
+import java.nio.ByteBuffer
 import kotlin.time.Duration.Companion.milliseconds
 
 typealias PacketListener = (packet: S2CPacket) -> Unit
 
-// 98% of this is from Waffler527 lol
-// I got blocked and ignored because I forgot this 1 line above...
-// I would rewrite it,
-// but there's no way to actually rewrite this without niggers complaining about it still not being mine,
-// since it's literally just connecting to a WebSocket (which is very simple)...
+// 98% of this WAS from Waffler527, before I rewrote it in a different library in order to stop the complaints.
+// I got blocked and ignored because I forgot this 1 line above before I rewrote it...
+@ClientEndpoint(configurator = ClientConfigurator::class)
 class WebSocketClient {
     companion object {
         private val gson: Gson = GsonBuilder().create()
 //        private const val RECONNECT_DELAY = 3000L
-        private const val SERVER_URL = "wss://auth.riseclient.com:8443"
+        private const val SERVER = "wss://auth.riseclient.com:8443"
+        private val SERVER_URL = URI.create(SERVER)
     }
-    private val factory = NioIoHandler.newFactory()
-    private val group = MultiThreadIoEventLoopGroup(factory)
-    var channel: Channel? = null
     private val packetListeners = mutableSetOf<PacketListener>()
     private val handshakeListeners = mutableSetOf<() -> Unit>()
+    private var session: Session? = null
 
     fun addPacketListener(listener: PacketListener) {
         packetListeners.add(listener)
@@ -59,116 +48,50 @@ class WebSocketClient {
     }
 
     fun connect() {
-        val uri = URI(SERVER_URL)
-        val sslCtx = SslContextBuilder.forClient()
-            .trustManager(InsecureTrustManagerFactory.INSTANCE)
-            .build()
+        val cm = ClientManager.createClient()
 
-        val handshaker = WebSocketClientHandshakerFactory.newHandshaker(
-            uri,
-            WebSocketVersion.V13,
-            null,
-            true,
-            //the awesome billionaire detection method
-            //of adding headers (since at most 6.1.30!!!)
-            //and only checking for them eons later
-            DefaultHttpHeaders().add("gdfg", "fdsgh")
-        )
-        val handler = WebSocketClientHandler(handshaker)
-
-        val bootstrap = Bootstrap()
-            .group(group)
-            .channel(NioSocketChannel::class.java)
-            .handler(object : ChannelInitializer<Channel>() {
-                override fun initChannel(ch: Channel) {
-                    val p = ch.pipeline()
-                    p.addLast(sslCtx.newHandler(ch.alloc(), uri.host, uri.port))
-                    p.addLast(HttpClientCodec(), HttpObjectAggregator(8192), handler)
-                    p.addLast(XorEncoder())
-                }
-            })
-
-        bootstrap.connect(uri.host, uri.port).addListener { f ->
-            if (!f.isSuccess) {
-                error("Connection failed: ${f.cause()?.message}")
-            } else {
-                channel = (f as ChannelFuture).channel()
-            }
-        }
+        cm.connectToServer(this, SERVER_URL)
     }
 
-    internal inner class WebSocketClientHandler(private val handshaker: WebSocketClientHandshaker) :
-        SimpleChannelInboundHandler<Any>() {
+    @OnOpen
+    fun onOpen(session: Session) {
+        this.session = session
+        println("Connection opened!")
+        handshakeListeners.callEach()
+    }
 
-        private var handshakeFuture: ChannelPromise? = null
-        private var keepAliveTask: ScheduledFuture<*>? = null
-
-        override fun handlerAdded(ctx: ChannelHandlerContext) {
-            handshakeFuture = ctx.newPromise()
+    @OnMessage
+    fun onMessage(msg: String) {
+        if (session == null) {
+            println("Server tried to send a message while session is null..?")
+            return
         }
+        val j = gson.fromJson(msg, JsonObject::class.java)
 
-        override fun channelActive(ctx: ChannelHandlerContext) {
-            handshaker.handshake(ctx.channel())
-        }
+        val parsed = PacketHandler.parse(j)
+        packetListeners.callEach1(parsed)
+    }
 
-        override fun channelInactive(ctx: ChannelHandlerContext) {
-            keepAliveTask?.cancel(true)
-        }
+    internal fun sendRaw(data: String) {
+        val session = session ?: error("WebSocketClient.sendRaw(String) called while session is null!")
+        session.asyncRemote.sendText(encrypt(data))
+    }
 
-        override fun channelRead0(ctx: ChannelHandlerContext, msg: Any) {
-            val ch = ctx.channel()
-
-            if (!handshaker.isHandshakeComplete) {
-                try {
-                    handshaker.finishHandshake(ch, msg as FullHttpResponse)
-                    handshakeFuture!!.setSuccess()
-                    scheduleKeepAlive(ctx)
-                    this@WebSocketClient.handshakeListeners.forEach(Function0<Unit>::invoke)
-                } catch (e: Exception) {
-                    println("Handshake failed: ${e.message}")
-                    handshakeFuture!!.setFailure(e)
-                    ctx.close()
-                }
-                return
-            }
-
-            if (msg is FullHttpResponse) error("Unexpected HTTP response: $msg")
-
-            when (msg) {
-                is TextWebSocketFrame -> {
-                    val j = gson.fromJson(msg.text(), JsonObject::class.java)
-                    val packet = PacketHandler.parse(j)
-                    this@WebSocketClient.packetListeners.forEach { it(packet) }
-                }
-                is CloseWebSocketFrame -> {
-                    ch.close()
-                }
-            }
-        }
-
-        private fun scheduleKeepAlive(ctx: ChannelHandlerContext) {
-            keepAliveTask = ctx.channel().eventLoop().scheduleAtFixedRate({
-                if (ctx.channel().isOpen) {
-                    ctx.channel().writeAndFlush(TextWebSocketFrame(C2SPacketKeepAlive.export()))
-                }
-            }, 5, 5, TimeUnit.SECONDS)
-        }
-
-        override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-            println("Error: ${cause.message}")
-            ctx.close()
-        }
+    internal fun sendRaw(data: ByteArray) {
+        val session = session ?: error("WebSocketClient.sendRaw(ByteArray) called while session is null!")
+        session.asyncRemote.sendBinary(ByteBuffer.wrap(data))
     }
 
     fun send(packet: C2SPacket) {
-        val channel = channel ?: error("WebSocketClient.send called while null!")
-        channel.writeAndFlush(TextWebSocketFrame(packet.export()))
+        if (session == null)
+            error("WebSocketClient.send(C2SPacket) called while session is null!")
+        sendRaw(packet.export())
     }
 }
 
 fun connectAs(username: String) {
     val wsc = WebSocketClient()
-    val exempted = username == "billionaire"
+    val spamExempt = username == "billionaire"
     wsc.addHandshakeListener {
         wsc.send(C2SPacketAuthenticate(username, "ok lol"))
     }
@@ -181,10 +104,10 @@ fun connectAs(username: String) {
                 println("[IRC] $author: $msg")
                 CoroutineScope(Dispatchers.IO).launch {
                     wsc.send("@$author Proof of $msg? ${(1..3).random()}".asIRCMessage)
-                    if (!exempted) delay(3.01e3.milliseconds)
+                    if (!spamExempt) delay(3.01e3.milliseconds)
                     wsc.send("@$author 0".asIRCMessage)
-                    if (!exempted) delay(3.01e3.milliseconds)
-                    if (!exempted) wsc.send("@$author FOLD!".asIRCMessage)
+                    if (!spamExempt) delay(3.01e3.milliseconds)
+                    if (!spamExempt) wsc.send("@$author FOLD!".asIRCMessage)
                     delay(3.01e3.milliseconds)
                 }
             }
@@ -210,4 +133,7 @@ fun main() {
     for (username in namesToLock) {
         connectAs(username)
     }
+    println("Press ENTER / RETURN to stop.")
+    readlnOrNull()
+    println("Stopping...")
 }

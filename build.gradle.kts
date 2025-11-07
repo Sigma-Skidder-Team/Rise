@@ -11,10 +11,8 @@ repositories {
 
 dependencies {
     implementation("com.google.code.gson:gson:2.11.0")
-    implementation("io.netty:netty-handler-proxy:4.2.7.Final")
-    implementation("io.netty:netty-codec-socks:4.2.7.Final")
-    implementation("com.google.code.gson:gson:2.11.0")
-    implementation("org.java-websocket:Java-WebSocket:1.6.0")
+    implementation("org.glassfish.tyrus:tyrus-client:2.2.1")
+    implementation("org.glassfish.tyrus:tyrus-container-grizzly-client:2.2.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 }
 
