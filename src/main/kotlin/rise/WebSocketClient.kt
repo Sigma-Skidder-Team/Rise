@@ -14,16 +14,30 @@ import io.netty.handler.codec.http.HttpObjectAggregator
 import io.netty.handler.codec.http.websocketx.*
 import io.netty.handler.ssl.SslContextBuilder
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import rise.packet.api.C2SPacket
 import rise.packet.api.S2CPacket
+import rise.packet.impl.c2s.community.asIRCMessage
 import rise.packet.impl.c2s.general.C2SPacketKeepAlive
 import rise.packet.impl.c2s.protection.C2SPacketAuthenticate
+import rise.packet.impl.s2c.community.S2CPacketIRCMessage
+import rise.packet.impl.s2c.general.S2CPacketKeepAlive
+import rise.packet.impl.s2c.protection.S2CPacketAuthenticationFinish
 import java.net.URI
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.milliseconds
 
 typealias PacketListener = (packet: S2CPacket) -> Unit
 
 // 98% of this is from Waffler527 lol
+// I got blocked and ignored because I forgot this 1 line above...
+// I would rewrite it,
+// but there's no way to actually rewrite this without niggers complaining about it still not being mine,
+// since it's literally just connecting to a WebSocket (which is very simple)...
 class WebSocketClient {
     companion object {
         private val gson: Gson = GsonBuilder().create()
@@ -55,7 +69,9 @@ class WebSocketClient {
             WebSocketVersion.V13,
             null,
             true,
-            //the awesome billionaire detection method of adding headers and only checking for them eons later
+            //the awesome billionaire detection method
+            //of adding headers (since at most 6.1.30!!!)
+            //and only checking for them eons later
             DefaultHttpHeaders().add("gdfg", "fdsgh")
         )
         val handler = WebSocketClientHandler(handshaker)
@@ -143,17 +159,55 @@ class WebSocketClient {
             ctx.close()
         }
     }
+
+    fun send(packet: C2SPacket) {
+        val channel = channel ?: error("WebSocketClient.send called while null!")
+        channel.writeAndFlush(TextWebSocketFrame(packet.export()))
+    }
+}
+
+fun connectAs(username: String) {
+    val wsc = WebSocketClient()
+    val exempted = username == "billionaire"
+    wsc.addHandshakeListener {
+        wsc.send(C2SPacketAuthenticate(username, "ok lol"))
+    }
+    wsc.addPacketListener { packet ->
+        when (packet) {
+            is S2CPacketIRCMessage -> {
+                val msg = packet.message
+                // they append a number to it lol
+                val author = packet.author.slice(1..<packet.author.length)
+                println("[IRC] $author: $msg")
+                CoroutineScope(Dispatchers.IO).launch {
+                    wsc.send("@$author Proof of $msg? ${(1..3).random()}".asIRCMessage)
+                    if (!exempted) delay(3.01e3.milliseconds)
+                    wsc.send("@$author 0".asIRCMessage)
+                    if (!exempted) delay(3.01e3.milliseconds)
+                    if (!exempted) wsc.send("@$author FOLD!".asIRCMessage)
+                    delay(3.01e3.milliseconds)
+                }
+            }
+            is S2CPacketAuthenticationFinish -> {
+                val success = packet.success
+                println("${if (success) "Successfully" else "Failed to"} authenticate${if (success) "d" else ""}!")
+                println("Reason: ${packet.reason}")
+                println("Auth time: ${packet.serverTimeMS}")
+                println("PI: ${packet.pi}")
+                println("Max Pitch: ${packet.maxPitch}")
+            }
+            is S2CPacketKeepAlive -> {}
+            else -> {
+                println("Unhandled packet: $packet")
+            }
+        }
+    }
+    wsc.connect()
 }
 
 fun main() {
-    val wsc = WebSocketClient()
-    wsc.addHandshakeListener {
-        println("Send")
-        val json = C2SPacketAuthenticate("billionaire", "segawtaawt").export()
-        wsc.channel!!.writeAndFlush(TextWebSocketFrame(json))
+    val namesToLock = setOf("billionaire", "billionaire2")
+    for (username in namesToLock) {
+        connectAs(username)
     }
-    wsc.addPacketListener { packet ->
-        println("got packet: $packet")
-    }
-    wsc.connect()
 }
