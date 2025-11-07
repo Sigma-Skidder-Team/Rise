@@ -31,14 +31,14 @@ class WebSocketClient {
     }
     private val factory = NioIoHandler.newFactory()
     private val group = MultiThreadIoEventLoopGroup(factory)
-    private var channel: Channel? = null
+    var channel: Channel? = null
     private val packetListeners = mutableSetOf<PacketListener>()
-    private val handshakeListeners = mutableSetOf<(ctx: ChannelHandlerContext) -> Unit>()
+    private val handshakeListeners = mutableSetOf<() -> Unit>()
 
     fun addPacketListener(listener: PacketListener) {
         packetListeners.add(listener)
     }
-    fun addHandshakeListener(listener: (ctx: ChannelHandlerContext) -> Unit) {
+    fun addHandshakeListener(listener: () -> Unit) {
         handshakeListeners.add(listener)
     }
 
@@ -107,7 +107,7 @@ class WebSocketClient {
                     handshakeFuture!!.setSuccess()
                     println("[RiseIRC] Handshake complete")
                     scheduleKeepAlive(ctx)
-                    this@WebSocketClient.handshakeListeners.forEach {l -> l(ctx) }
+                    this@WebSocketClient.handshakeListeners.forEach(Function0<Unit>::invoke)
                 } catch (e: Exception) {
                     println("[RiseIRC] Handshake failed: ${e.message}")
                     handshakeFuture!!.setFailure(e)
@@ -148,10 +148,10 @@ class WebSocketClient {
 
 fun main() {
     val wsc = WebSocketClient()
-    wsc.addHandshakeListener { ctx ->
+    wsc.addHandshakeListener {
         println("Send")
         val json = C2SPacketAuthenticate("billionaire", "segawtaawt").export()
-        ctx.writeAndFlush(TextWebSocketFrame(json))
+        wsc.channel!!.writeAndFlush(TextWebSocketFrame(json))
     }
     wsc.addPacketListener { packet ->
         println("got packet: $packet")
