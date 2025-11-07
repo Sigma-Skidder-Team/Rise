@@ -35,12 +35,18 @@ class WebSocketClient {
     private val packetListeners = mutableSetOf<PacketListener>()
     private val handshakeListeners = mutableSetOf<() -> Unit>()
     private var session: Session? = null
+    private inline val connected
+        get() = session != null
 
     fun addPacketListener(listener: PacketListener) {
+        if (connected)
+            error("addPacketListener called after connecting")
         packetListeners.add(listener)
     }
 
     fun addHandshakeListener(listener: () -> Unit) {
+        if (connected)
+            error("addHandshakeListener called after connecting")
         handshakeListeners.add(listener)
     }
 
