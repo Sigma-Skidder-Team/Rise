@@ -104,7 +104,7 @@ data class Account(val username: String, val hwid: String)
 fun connectAs(acc: Account) {
     val wsc = WebSocketClient()
     wsc.addHandshakeListener {
-        wsc.send(C2SPacketAuthenticate(acc.username, "ok lol"))
+        wsc.send(C2SPacketAuthenticate(acc.username, acc.hwid))
     }
     wsc.addPacketListener { packet ->
         when (packet) {
