@@ -14,3 +14,5 @@ class C2SPacketIRCMessage(val message: String) : C2SPacket(4) {
         return j
     }
 }
+val String.asIRCMessage
+    get() = C2SPacketIRCMessage(this)
