@@ -2,7 +2,7 @@
 
 lets you connect to Rise auth servers,
 with
-<span style="font-size: 31%;">or without if billionaire keeps auth disabled</span>
+<small>or without if billionaire keeps auth disabled</small>
 proper credentials.
 
 ## Waffled
