@@ -70,7 +70,6 @@ class WebSocketClient {
     @Suppress("unused")
     fun onOpen(session: Session) {
         this.session = session
-        println("Connection opened!")
         scheduler.scheduleAtFixedRate({
             try {
                 send(C2SPacketKeepAlive)
