@@ -56,11 +56,13 @@ class WebSocketClient {
 
     fun disconnect(): Boolean = runCatching {
         session?.close() ?: return@runCatching false
+//        session = null
         return@runCatching true
     }.getOrElse { false }
 
     fun disconnect(reason: CloseReason): Boolean = runCatching {
         session?.close(reason) ?: return@runCatching false
+//        session = null
         return@runCatching true
     }.getOrElse { false }
 
@@ -82,6 +84,7 @@ class WebSocketClient {
     @Suppress("unused")
     fun onClose() {
         scheduler.shutdownNow()
+        session = null
     }
 
     @OnMessage
