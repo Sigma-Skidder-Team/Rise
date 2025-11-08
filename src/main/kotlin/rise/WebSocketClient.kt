@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import jakarta.websocket.ClientEndpoint
+import jakarta.websocket.CloseReason
 import jakarta.websocket.OnClose
 import jakarta.websocket.OnMessage
 import jakarta.websocket.OnOpen
@@ -51,6 +52,14 @@ class WebSocketClient {
         val cm = ClientManager.createClient()
 
         cm.connectToServer(this, SERVER_URL)
+    }
+
+    @JvmOverloads
+    fun disconnect(reason: CloseReason? = null) {
+        if (reason != null)
+            session?.close(reason)
+        else
+            session?.close()
     }
 
     @OnOpen
