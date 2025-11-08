@@ -3,6 +3,20 @@
 lets you connect to Rise auth servers,
 with proper credentials.
 
+## Usage
+
+See [Example.kt](src/test/kotlin/Example.kt)
+
+- Add JitPack to your repos
+```kotlin
+maven { url = uri("https://jitpack.io") }
+```
+- Add the dependency
+```kotlin
+// 0.0.1 is latest
+implementation("com.github.Sigma-Skidder-Team:Rise:0.0.1")
+```
+
 ## Waffled
 
 ![help fix pls](lol/help%20fix.png)

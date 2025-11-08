@@ -3,7 +3,7 @@ package rise.packet.impl.c2s.protection
 import com.google.gson.JsonObject
 import rise.packet.api.C2SPacket
 
-class C2SPacketAuthenticate(
+class C2SPacketAuthenticate @JvmOverloads constructor(
     val username: String,
     val hwid: String,
     val hazeID: String = "",

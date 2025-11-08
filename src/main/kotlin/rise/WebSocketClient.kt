@@ -10,15 +10,12 @@ import jakarta.websocket.OnOpen
 import jakarta.websocket.Session
 import org.glassfish.tyrus.client.ClientManager
 import rise.packet.api.C2SPacket
-import rise.packet.api.S2CPacket
 import rise.packet.impl.c2s.general.C2SPacketKeepAlive
 import java.net.URI
 import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
-
-typealias PacketListener = (packet: S2CPacket) -> Unit
 
 // 98% of this WAS from Waffler527, before I rewrote it in a different library in order to stop the complaints.
 // I got blocked and ignored because I forgot this 1 line above before I rewrote it...
@@ -33,7 +30,7 @@ class WebSocketClient {
 
     private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private val packetListeners = mutableSetOf<PacketListener>()
-    private val handshakeListeners = mutableSetOf<() -> Unit>()
+    private val handshakeListeners = mutableSetOf<Callback>()
     private var session: Session? = null
     private inline val connected
         get() = session != null
@@ -44,7 +41,7 @@ class WebSocketClient {
         packetListeners.add(listener)
     }
 
-    fun addHandshakeListener(listener: () -> Unit) {
+    fun addHandshakeListener(listener: Callback) {
         if (connected)
             error("addHandshakeListener called after connecting")
         handshakeListeners.add(listener)
@@ -67,7 +64,7 @@ class WebSocketClient {
             } catch (e: Exception) {
             }
         }, 1, 1, TimeUnit.SECONDS)
-        handshakeListeners.callEach()
+        handshakeListeners.forEach { it() }
     }
 
     @OnClose
@@ -86,10 +83,10 @@ class WebSocketClient {
         val j = gson.fromJson(msg, JsonObject::class.java)
 
         val parsed = PacketHandler.parse(j)
-        packetListeners.callEach1(parsed)
+        packetListeners.forEach { it(parsed) }
     }
 
-    internal fun sendRaw(data: String) {
+    private fun sendRaw(data: String) {
         val session = session ?: error("WebSocketClient.sendRaw(String) called while session is null!")
         session.asyncRemote.sendText(encrypt(data))
     }
