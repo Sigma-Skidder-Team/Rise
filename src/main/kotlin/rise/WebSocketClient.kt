@@ -54,11 +54,15 @@ class WebSocketClient {
         cm.connectToServer(this, SERVER_URL)
     }
 
-    @JvmOverloads
-    fun disconnect(reason: CloseReason? = null) = if (reason != null)
-        session?.close(reason)
-    else
-        session?.close()
+    fun disconnect(): Boolean = runCatching {
+        session?.close() ?: return@runCatching false
+        return@runCatching true
+    }.getOrElse { false }
+
+    fun disconnect(reason: CloseReason): Boolean = runCatching {
+        session?.close(reason) ?: return@runCatching false
+        return@runCatching true
+    }.getOrElse { false }
 
     @OnOpen
     @Suppress("unused")
