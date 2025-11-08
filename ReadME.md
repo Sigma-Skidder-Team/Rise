@@ -5,7 +5,7 @@ with proper credentials.
 
 ## Usage
 
-See [Example.kt](src/test/kotlin/Example.kt)
+See [Example.kt](src/test/kotlin/Example.kt) or [JavaExample.java](src/test/java/JavaExample.java).
 
 - Add JitPack to your repos
 ```kotlin
