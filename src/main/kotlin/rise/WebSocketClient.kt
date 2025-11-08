@@ -55,12 +55,10 @@ class WebSocketClient {
     }
 
     @JvmOverloads
-    fun disconnect(reason: CloseReason? = null) {
-        if (reason != null)
-            session?.close(reason)
-        else
-            session?.close()
-    }
+    fun disconnect(reason: CloseReason? = null) = if (reason != null)
+        session?.close(reason)
+    else
+        session?.close()
 
     @OnOpen
     @Suppress("unused")

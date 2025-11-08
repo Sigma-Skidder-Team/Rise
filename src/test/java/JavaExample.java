@@ -39,6 +39,8 @@ public class JavaExample {
                 wsc.send(C2SPacketIRCMessageKt.getAsIRCMessage(
                         "Hello from github.com/Sigma-Skidder-Team/Rise!"
                 ));
+                // we sent our message, disconnect.
+                wsc.disconnect();
             } else if (p instanceof S2CPacketKeepAlive) {
                 // do nothing, it's a keepalive.
             } else if (p instanceof S2CPacketTabIRC tabIRC) {

@@ -39,6 +39,8 @@ fun connectAs(acc: Account) {
                 println("PI: ${packet.pi}")
                 println("Max Pitch: ${packet.maxPitch}")
                 wsc.send("Hello from github.com/Sigma-Skidder-Team/Rise!".asIRCMessage)
+                // we sent our message, disconnect.
+                wsc.disconnect()
             }
             is S2CPacketKeepAlive -> {}
             is S2CPacketTabIRC -> {
