@@ -32,8 +32,8 @@ class WebSocketClient {
     private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private val packetListeners = mutableSetOf<PacketListener>()
     private val handshakeListeners = mutableSetOf<Callback>()
-    private var session: Session? = null
-    private inline val connected
+    var session: Session? = null
+    inline val connected
         get() = session != null
 
     fun addPacketListener(listener: PacketListener) {
