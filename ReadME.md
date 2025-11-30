@@ -13,8 +13,8 @@ maven { url = uri("https://jitpack.io") }
 ```
 - Add the dependency
 ```kotlin
-// 0.0.3 is latest
-implementation("com.github.Sigma-Skidder-Team:Rise:0.0.3")
+// 0.0.4 is latest
+implementation("com.github.Sigma-Skidder-Team:Rise:0.0.4")
 ```
 
 ## Waffled
