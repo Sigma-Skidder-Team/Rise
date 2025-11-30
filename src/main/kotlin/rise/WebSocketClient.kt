@@ -16,6 +16,7 @@ import java.net.URI
 import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 // 98% of this WAS from Waffler527, before I rewrote it in a different library in order to stop the complaints.
@@ -32,6 +33,7 @@ class WebSocketClient {
     private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private val packetListeners = mutableSetOf<PacketListener>()
     private val handshakeListeners = mutableSetOf<Callback>()
+    private var keepAliveFuture : ScheduledFuture<*>? = null
     var session: Session? = null
     inline val connected
         get() = session != null
@@ -70,7 +72,7 @@ class WebSocketClient {
     @Suppress("unused")
     fun onOpen(session: Session) {
         this.session = session
-        scheduler.scheduleAtFixedRate({
+        keepAliveFuture = scheduler.scheduleAtFixedRate({
             try {
                 send(C2SPacketKeepAlive)
             } catch (e: Exception) {
@@ -83,6 +85,7 @@ class WebSocketClient {
     @Suppress("unused")
     fun onClose() {
         scheduler.shutdownNow()
+        keepAliveFuture?.cancel(true)
         session = null
     }
 
