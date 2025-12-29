@@ -6,16 +6,23 @@ import rise.packet.api.S2CPacket
 class S2CPacketAuthenticationFinish(
     val success: Boolean,
     val reason: String,
-    val pi: Double = Math.PI,
-    val maxPitch: Float = 90f,
-    val serverTimeMS: Long = System.currentTimeMillis()
+    val aod: AuthenticatedOnlyData?
 ) : S2CPacket(1) {
+
+    @JvmRecord
+    data class AuthenticatedOnlyData(
+        val pi: Double = Math.PI,
+        val maxPitch: Float = 90f,
+        val serverTimeMS: Long = System.currentTimeMillis()
+    ) {}
     constructor(json: JsonObject) : this(
         json.get("a").asBoolean,
         json.get("e").asString,
-        json.get("b").asDouble,
-        json.get("c").asFloat,
-        json.get("d").asLong,
+        if (json.get("a").asBoolean) AuthenticatedOnlyData(
+            json.get("b").asDouble,
+            json.get("c").asFloat,
+            json.get("d").asLong,
+        ) else null,
     )
 
     override fun toString(): String {

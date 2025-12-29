@@ -32,9 +32,12 @@ public class JavaExample {
                 boolean success = authFinish.getSuccess();
                 System.out.println((success ? "Successfully" : "Failed to") + " authenticate" + (success ? "d" : "") + "!");
                 System.out.println("Reason: " + authFinish.getReason());
-                System.out.println("Auth time: " + authFinish.getServerTimeMS());
-                System.out.println("PI: " + authFinish.getPi());
-                System.out.println("Max Pitch: " + authFinish.getMaxPitch());
+                final var aod = authFinish.getAod();
+                if (aod != null) {
+                    System.out.println("Auth time: " + aod.serverTimeMS());
+                    System.out.println("PI: " + aod.pi());
+                    System.out.println("Max Pitch: " + aod.maxPitch());
+                }
                 // very ugly because... java.
                 wsc.send(C2SPacketIRCMessageKt.getAsIRCMessage(
                         "Hello from github.com/Sigma-Skidder-Team/Rise!"
@@ -67,7 +70,7 @@ public class JavaExample {
     }
 
     public static void main(String[] args) {
-        final var accounts = Set.of(new Account("YourUsernameHere", "YourHWIDHere"));
+        final var accounts = Set.of(new Account("AuthEnabler", "67"));
         accounts.forEach(JavaExample::connectAs);
     }
 }
