@@ -2,9 +2,9 @@
 
 > [!WARNING]
 > As of 12/29/2025 CDT, you can't authenticate to Rise's auth server without a valid HWID and username.
-> The (99% sure it's the last, probably unless auth turns off again) version of this repository is going to be 0.0.5.
+> The (99% sure it's the last, probably unless auth turns off again) version of this repository is going to be 0.1.0.
 >
-> 0.0.5 updates S2CPacketAuthenticationFinish, so it properly parses auth finish packets that aren't successful:
+> 0.1.0 updates S2CPacketAuthenticationFinish, so it properly parses auth finish packets that aren't successful:
 > - moved `pi`, `maxPitch`, and `serverTimeMS` into a data class named `AuthenticatedOnlyData`
 > - replaced all of those with a single, nullable field named `aod` (of type `AuthenticatedOnlyData?`)
 > 
@@ -31,7 +31,7 @@ maven { url = uri("https://jitpack.io") }
 - Add the dependency
 ```kotlin
 // check for the latest version, this isn't always updated!
-implementation("com.github.Sigma-Skidder-Team:Rise:0.0.5")
+implementation("com.github.Sigma-Skidder-Team:Rise:0.1.0")
 ```
 
 ### Maven
@@ -53,7 +53,7 @@ implementation("com.github.Sigma-Skidder-Team:Rise:0.0.5")
 <dependency>
     <groupId>com.github.Sigma-Skidder-Team</groupId>
     <artifactId>Rise</artifactId>
-    <version>0.0.5</version>
+    <version>0.1.0</version>
 </dependency>
 ```
 
