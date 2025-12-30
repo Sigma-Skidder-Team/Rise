@@ -53,7 +53,7 @@ implementation("com.github.Sigma-Skidder-Team:Rise:0.0.5")
 <dependency>
     <groupId>com.github.Sigma-Skidder-Team</groupId>
     <artifactId>Rise</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.5</version>
 </dependency>
 ```
 
