@@ -35,9 +35,11 @@ fun connectAs(acc: Account) {
                 val success = packet.success
                 println("${if (success) "Successfully" else "Failed to"} authenticate${if (success) "d" else ""}!")
                 println("Reason: ${packet.reason}")
-                println("Auth time: ${packet.serverTimeMS}")
-                println("PI: ${packet.pi}")
-                println("Max Pitch: ${packet.maxPitch}")
+                packet.aod?.let {
+                    println("Auth time: ${it.serverTimeMS}")
+                    println("PI: ${it.pi}")
+                    println("Max Pitch: ${it.maxPitch}")
+                }
                 wsc.send("Hello from github.com/Sigma-Skidder-Team/Rise!".asIRCMessage)
                 // we sent our message, disconnect.
                 wsc.disconnect()
@@ -76,7 +78,7 @@ fun connectAs(acc: Account) {
 }
 
 fun main() {
-    val accounts = setOf(Account("YourNameHere", "YourHWIDHere"))
+    val accounts = setOf(Account("AuthEnabler", "67"))
     for (acc in accounts) {
         connectAs(acc)
     }
