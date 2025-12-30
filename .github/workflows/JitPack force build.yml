@@ -1,0 +1,25 @@
+name: JitPack force build
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  job:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Force JitPack build"
+        run: |
+          curl 'https://www.jitpack.io/api/versions/com.github.Sigma-Skidder-Team/Rise?reload' \
+            --compressed \
+            -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0' \
+            -H 'Accept: application/json' \
+            -H 'Accept-Encoding: gzip, deflate, br, zstd' \
+            -H 'Sec-GPC: 1' \
+            -H 'Connection: keep-alive' \
+            -H 'Referer: https://www.jitpack.io/' \
+            -H 'Sec-Fetch-Dest: empty' \
+            -H 'Sec-Fetch-Mode: cors' \
+            -H 'Sec-Fetch-Site: same-origin' \
+            -H 'TE: trailers'
