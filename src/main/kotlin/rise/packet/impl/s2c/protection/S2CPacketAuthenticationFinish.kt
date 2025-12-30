@@ -26,6 +26,6 @@ class S2CPacketAuthenticationFinish(
     )
 
     override fun toString(): String {
-        return "S2CPacketAuthenticationFinish(success=$success, reason='$reason', pi=$pi, maxPitch=$maxPitch, serverTimeMS=$serverTimeMS)"
+        return "S2CPacketAuthenticationFinish(success=$success, reason='$reason', aod=$aod)"
     }
 }
